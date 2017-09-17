@@ -35,7 +35,7 @@ public class EmotionInference {
     //private static final String[] outputNodes = {"output"};
     private static final long[] INPUT_SIZE = {1, 136};
 
-    //private static final int OUTPUT_S IZE = 6; // for frozen_rt
+    //private static final int OUTPUT_SIZE = 6; // for frozen_rt
 
     //private static final int OUTPUT_SIZE = 5; // for common_emotions and normalized
 
@@ -64,10 +64,10 @@ public class EmotionInference {
 
     public float[] getEmotionProb(float[] input) {
 
-        /*Log.d(TAG, "Inside get emotion probability function!") ;
+        /* Log.d(TAG, "Inside get emotion probability function!") ;
         for (float f : input) {
             Log.d("TAG", "f = " + f);
-        }*/
+        } */
 
         //float[] result = new float[OUTPUT_SIZE];
 
@@ -80,8 +80,8 @@ public class EmotionInference {
         try {
             inferenceInterface.feed(INPUT_NODE, input, INPUT_SIZE); // INPUT_SIZE is an int[] of expected shape, input is a float[] with the input data
             inferenceInterface.run(outputNodes);
-            inferenceInterface.fetch(OUTPUT_NODE, result); // output is a pre allocated float[] in the size of the expected output vector
-            inferenceInterface.fetch(OUTPUT_NODE, res); // output is a pre allocated float[] in the size of the expected output vector
+            inferenceInterface.fetch(OUTPUT_NODE, result); // output is a pre-allocated float[] in the size of the expected output vector
+            inferenceInterface.fetch(OUTPUT_NODE, res); // output is a pre-allocated float[] in the size of the expected output vector
         } catch (Exception e) {
             Log.d(TAG, "Inside exception");
             Log.d(TAG, "Exception e = " + e.toString());
