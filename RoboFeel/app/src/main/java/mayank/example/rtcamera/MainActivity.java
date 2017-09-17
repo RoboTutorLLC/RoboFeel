@@ -314,7 +314,7 @@ public class MainActivity extends AppCompatActivity {
             });
         }
 
-        /*List<VisionDetRet> personList = mPersonDet.detect(imgPath);
+        /* List<VisionDetRet> personList = mPersonDet.detect(imgPath);
         if (personList.size() > 0) {
             Card card = new Card.Builder(MainActivity.this)
                     .withProvider(BigImageCardProvider.class)
@@ -330,7 +330,7 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(getApplicationContext(), "No person", Toast.LENGTH_SHORT).show();
                 }
             });
-        }*/
+        } */
 
         addCardListView(cardrets);
         dismissDialog();
