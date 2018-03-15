@@ -7,6 +7,10 @@ package mayank.example.rtcamera;
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.util.Log;
+import org.tensorflow.Graph;
+import org.tensorflow.Session;
+import org.tensorflow.Tensor;
+import org.tensorflow.TensorFlow;
 
 import org.tensorflow.contrib.android.TensorFlowInferenceInterface;
 
@@ -35,11 +39,11 @@ public class EmotionInference {
     //private static final String[] outputNodes = {"output"};
     private static final long[] INPUT_SIZE = {1, 136};
 
-    //private static final int OUTPUT_S IZE = 6; // for frozen_rt
+    private static final int OUTPUT_SIZE = 6; // for frozen_rt
 
     //private static final int OUTPUT_SIZE = 5; // for common_emotions and normalized
 
-    private static final int OUTPUT_SIZE = 4;
+    //private static final int OUTPUT_SIZE = 4;
 
     private static EmotionInference emotionInferenceInstance;
     private static AssetManager assetManager;
@@ -63,15 +67,6 @@ public class EmotionInference {
     }
 
     public float[] getEmotionProb(float[] input) {
-
-        /*Log.d(TAG, "Inside get emotion probability function!") ;
-        for (float f : input) {
-            Log.d("TAG", "f = " + f);
-        }*/
-
-        //float[] result = new float[OUTPUT_SIZE];
-
-        //float[] result = {0, 0, 0, 0, 0}; //for common emotions and normalized
 
         float[] result = {0, 0, 0, 0};
 
