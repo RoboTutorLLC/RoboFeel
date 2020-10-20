@@ -24,11 +24,18 @@
         >
     </Button>
 
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:id="@+id/imageView1"></ImageView>
     <SurfaceView
         android:layout_width="wrap_content"
         android:id="@+id/surfaceView1"
+        android:visibility="gone"
         android:layout_height="wrap_content">
     </SurfaceView>
+
 
 
 

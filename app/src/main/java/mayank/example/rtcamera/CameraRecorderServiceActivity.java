@@ -9,10 +9,12 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 
 public class CameraRecorderServiceActivity extends Activity implements SurfaceHolder.Callback {
     private static final String TAG = "Recorder";
     public static SurfaceView mSurfaceView;
+    public static ImageView mImageView;
     public static SurfaceHolder mSurfaceHolder;
     public static Camera mCamera ;
     public static boolean mPreviewRunning;
@@ -24,17 +26,20 @@ public class CameraRecorderServiceActivity extends Activity implements SurfaceHo
         setContentView(R.layout.service_activity);
 
         mSurfaceView = (SurfaceView) findViewById(R.id.surfaceView1);
+        mImageView = (ImageView) findViewById(R.id.imageView1);
         mSurfaceHolder = mSurfaceView.getHolder();
         mSurfaceHolder.addCallback(this);
         mSurfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
 
         Button btnStart = (Button) findViewById(R.id.StartService);
+
         btnStart.setOnClickListener(new View.OnClickListener()
         {
             public void onClick(View v)
             {
-                Log.d(TAG,"Starting Service");
-                Intent intent = new Intent(CameraRecorderServiceActivity.this, RecorderService.class);
+                Intent intent = new Intent(CameraRecorderServiceActivity.this, CameraService.class);
+                //testService.startCapturing(this);
+
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startService(intent);
                 finish();
@@ -46,7 +51,7 @@ public class CameraRecorderServiceActivity extends Activity implements SurfaceHo
         {
             public void onClick(View v)
             {
-                stopService(new Intent(CameraRecorderServiceActivity.this, RecorderService.class));
+                stopService(new Intent(CameraRecorderServiceActivity.this, CameraService.class));
             }
         });
 
@@ -54,8 +59,9 @@ public class CameraRecorderServiceActivity extends Activity implements SurfaceHo
         btnRoboFeel.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(CameraRecorderServiceActivity.this, CameraActivity.class);
-                startService(intent);
+                Log.d(TAG,"Robofeel button");
+                Intent intent = new Intent(CameraRecorderServiceActivity.this, MainActivity.class);
+                startActivity(intent);
             }
         });
     }

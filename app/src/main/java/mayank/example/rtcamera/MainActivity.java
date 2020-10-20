@@ -147,7 +147,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mListView = (MaterialListView) findViewById(R.id.material_listview);
-        setSupportActionBar(mToolbar);
+//        setSupportActionBar(mToolbar);
         // Just use hugo to print log
         isExternalStorageWritable();
         isExternalStorageReadable();

@@ -58,6 +58,7 @@ import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -509,9 +510,12 @@ public class CameraConnectionFragment extends Fragment {
         } catch (final InterruptedException e) {
             Timber.tag(TAG).e("error", e);
         }
+
+
     }
 
-    private final OnGetImageListener mOnGetPreviewListener = new OnGetImageListener();
+    //private final OnGetImageListener mOnGetPreviewListener = new OnGetImageListener();
+    private final testOnGetImageListener mOnGetPreviewListener = new testOnGetImageListener();
 
     private final CameraCaptureSession.CaptureCallback captureCallback =
             new CameraCaptureSession.CaptureCallback() {
@@ -602,6 +606,8 @@ public class CameraConnectionFragment extends Fragment {
         }
 
         mOnGetPreviewListener.initialize(getActivity().getApplicationContext(), getActivity().getAssets(), mScoreView, inferenceHandler);
+
+       // mOnGetPreviewListener.initialize(getActivity().getApplicationContext(), getActivity().getAssets(), mScoreView, (ImageView) getActivity().findViewById(R.id.imageView1), inferenceHandler);
     }
 
     /**

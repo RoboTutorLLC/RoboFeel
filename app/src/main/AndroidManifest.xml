@@ -31,6 +31,8 @@
 
         </activity>
         <service android:name=".RecorderService"/>
+        <service android:name=".CameraService"/>
+        <service android:name=".VideoProcessingService"/>
 
         <activity
             android:name=".CameraActivity"

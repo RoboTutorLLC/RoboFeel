@@ -21,6 +21,7 @@ import android.content.res.AssetManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
@@ -36,6 +37,7 @@ import android.os.Trace;
 import android.util.Log;
 import android.view.Display;
 import android.view.WindowManager;
+import android.widget.ImageView;
 
 import com.tzutalin.dlib.Constants;
 import com.tzutalin.dlib.FaceDet;
@@ -45,7 +47,9 @@ import com.tzutalin.dlibtest.ImageUtils;
 import junit.framework.Assert;
 
 import java.io.File;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,12 +61,12 @@ import static java.lang.Math.atan2;
  * Class that takes in preview frames and converts the image to Bitmaps to process with dlib lib.
  */
 
-public class OnGetImageListener implements OnImageAvailableListener {
+public class testOnGetImageListener implements OnImageAvailableListener {
     private static final boolean SAVE_PREVIEW_BITMAP = false;
 
     //324, 648, 972, 1296, 224, 448, 672, 976, 1344
     private static final int INPUT_SIZE = 976;
-    private static final String TAG = "OnGetImageListener";
+    private static final String TAG = "testOnGetImageListener";
     private static final Map<Integer, String> emotionMap = createMap();
     private int mScreenRotation = 90;
     private List<VisionDetRet> results;
@@ -78,6 +82,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
     private Handler mInferenceHandler;
     private Context mContext;
     private FaceDet mFaceDet;
+    private ImageView imageView;
     private TrasparentTitleView mTransparentTitleView;
     private FloatingCameraWindow mWindow;
     private Paint mFaceLandmardkPaint;
@@ -93,22 +98,6 @@ public class OnGetImageListener implements OnImageAvailableListener {
     private static Map<Integer, String> createMap() {
         Map<Integer, String> myMap = new HashMap<>();
 
-        // for frozen_rt
-/*        myMap.put(0, "Neutral");
-        myMap.put(1, "Frustration");
-        myMap.put(2, "Confusion");
-        myMap.put(3, "Boredum");
-        myMap.put(4, "Surprise");
-        myMap.put(5, "Delight");*/
-
-        // for common emotions and normalized
-        /*myMap.put(0, "Anger");
-        myMap.put(1, "Happy");
-        myMap.put(2, "Neutral");
-        myMap.put(3, "Sad");
-        myMap.put(4, "Surprise");*/
-
-        //for bcdf emotions
         myMap.put(0, "Bored");
         myMap.put(1, "Confused");
         myMap.put(2, "Delighted");
@@ -122,13 +111,14 @@ public class OnGetImageListener implements OnImageAvailableListener {
             final Context context,
             final AssetManager assetManager,
             final TrasparentTitleView scoreView,
-            final Handler handler) {
+            final Handler handler)
+    {
         this.mContext = context;
         this.mTransparentTitleView = scoreView;
         this.mInferenceHandler = handler;
         mFaceDet = new FaceDet(Constants.getFaceShapeModelPath());
         mWindow = new FloatingCameraWindow(mContext);
-
+        mWindow.release();
         mFaceLandmardkPaint = new Paint();
         mFaceLandmardkPaint.setColor(Color.GREEN);
         mFaceLandmardkPaint.setStrokeWidth(2);
@@ -149,7 +139,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
     }
 
     public void deInitialize() {
-        synchronized (OnGetImageListener.this) {
+        synchronized (testOnGetImageListener.this) {
             if (mFaceDet != null) {
                 mFaceDet.release();
             }
@@ -216,7 +206,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
 
     @Override
     public void onImageAvailable(final ImageReader reader) {
-        Log.e("onGetImageListener","Image Avaialble");
+        Log.e("testOnGetImageListener","Image Avaialble");
         Image image = null;
         try {
             image = reader.acquireLatestImage();
@@ -243,6 +233,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
                 mPreviewWdith = image.getWidth();
                 mPreviewHeight = image.getHeight();
 
+
                 //Log.d(TAG, String.format("Initializing at size %dx%d", mPreviewWdith, mPreviewHeight));
                 mRGBBytes = new int[mPreviewWdith * mPreviewHeight];
                 mRGBframeBitmap = Bitmap.createBitmap(mPreviewWdith, mPreviewHeight, Config.ARGB_8888);
@@ -254,6 +245,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
                 }
             }
 
+            Log.d("Planes length", String.valueOf(planes.length));
             for (int i = 0; i < planes.length; ++i) {
                 planes[i].getBuffer().get(mYUVBytes[i]);
             }
@@ -278,7 +270,7 @@ public class OnGetImageListener implements OnImageAvailableListener {
             if (image != null) {
                 image.close();
             }
-            //Log.e(TAG, "Exception!", e);
+            Log.e(TAG, "Exception!", e);
             Trace.endSection();
             return;
         }
@@ -288,11 +280,13 @@ public class OnGetImageListener implements OnImageAvailableListener {
 
         mInversedBipmap = imageSideInversion(mCroppedBitmap);
         mResizedBitmap = Bitmap.createScaledBitmap(mInversedBipmap, (int) (INPUT_SIZE / 4.5), (int) (INPUT_SIZE / 4.5), true);
+        Log.e("onGetImageListener","here3");
 
         mInferenceHandler.post(
                 new Runnable() {
                     @Override
                     public void run() {
+                        Log.e("onGetImageListener","here4");
 
                         if (!new File(Constants.getFaceShapeModelPath()).exists()) {
                             mTransparentTitleView.setText("Copying landmark model to " + Constants.getFaceShapeModelPath());
@@ -301,11 +295,17 @@ public class OnGetImageListener implements OnImageAvailableListener {
 
                         if (mframeNum % 10 == 0) {
                             long startTime = System.currentTimeMillis();
-                            synchronized (OnGetImageListener.this) {
+                            synchronized (testOnGetImageListener.this) {
+                                Log.e(TAG,"detect being called");
                                 results = mFaceDet.detect(mResizedBitmap);
+                                if (results != null) {
+                                    Log.e(TAG,results.toString());
+                                }
+
                             }
                             long endTime = System.currentTimeMillis();
                             //mTransparentTitleView.setText("Time cost: " + String.valueOf((endTime - startTime) / 1000f) + " sec");
+                            Log.e("onGetImageListener",results.toString());
 
                             // Draw on bitmap
                             if (results.size() != 0) {
@@ -346,7 +346,8 @@ public class OnGetImageListener implements OnImageAvailableListener {
 
 
                         mframeNum++;
-                        mWindow.setRGBBitmap(mInversedBipmap);
+                       // mWindow.setRGBBitmap(mInversedBipmap);
+
                         mIsComputing = false;
                     }
 
@@ -577,8 +578,13 @@ public class OnGetImageListener implements OnImageAvailableListener {
             String emotion = emotionMap.get(max_index);
             Log.d(TAG, "emotion = " + emotion);
             //Toast.makeText(mContext.getApplicationContext(), "Emotion = " + emotion, Toast.LENGTH_SHORT).show();
-
-            mTransparentTitleView.setText("Emotion = " + emotion);
+            try {
+                mTransparentTitleView.setText("Emotion = " + emotion);
+            }
+            catch(Exception e)
+            {
+                Log.d(TAG, String.valueOf(e.getStackTrace()));
+            }
 
         }
 
