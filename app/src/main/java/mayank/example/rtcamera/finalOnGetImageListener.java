@@ -21,7 +21,6 @@ import android.content.res.AssetManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
@@ -32,8 +31,10 @@ import android.media.Image.Plane;
 import android.media.ImageReader;
 import android.media.ImageReader.OnImageAvailableListener;
 import android.os.Build;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Trace;
+import android.support.annotation.RequiresApi;
 import android.util.Log;
 import android.view.Display;
 import android.view.WindowManager;
@@ -46,27 +47,44 @@ import com.tzutalin.dlibtest.ImageUtils;
 
 import junit.framework.Assert;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.nio.ByteBuffer;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.lang.reflect.Array;
+import java.nio.Buffer;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static java.lang.Math.PI;
 import static java.lang.Math.atan2;
+import static java.lang.Math.log;
 
 /**
  * Class that takes in preview frames and converts the image to Bitmaps to process with dlib lib.
  */
 
-public class testOnGetImageListener implements OnImageAvailableListener {
+public class finalOnGetImageListener implements OnImageAvailableListener {
     private static final boolean SAVE_PREVIEW_BITMAP = false;
 
     //324, 648, 972, 1296, 224, 448, 672, 976, 1344
     private static final int INPUT_SIZE = 976;
-    private static final String TAG = "testOnGetImageListener";
+    private static final String TAG = "finalOnGetImageListener";
     private static final Map<Integer, String> emotionMap = createMap();
     private int mScreenRotation = 90;
     private List<VisionDetRet> results;
@@ -90,10 +108,22 @@ public class testOnGetImageListener implements OnImageAvailableListener {
     private Paint bluePaint;
     private int mframeNum = 0;
     private EmotionInference emotionInference;
-
+    private String filename;
     private Canvas canvas;
     private ArrayList<Point> landmarks;
     private int count = 0;
+    private File mediaStorageDir;
+    private File mediaStorageDir2;
+    private File mediaStorageDir3;
+    private BufferedWriter bufferedWriter;
+    private String LogFileName;
+    private String tempLogFileName;
+    private ArrayList<String> boxesList;
+    private ArrayList<ArrayList> landmarksList;
+    private String logOrNot;
+    private String SaveOrNot;
+    private File fileLogfile;
+    private double imagefileCounter;
 
     private static Map<Integer, String> createMap() {
         Map<Integer, String> myMap = new HashMap<>();
@@ -111,8 +141,7 @@ public class testOnGetImageListener implements OnImageAvailableListener {
             final Context context,
             final AssetManager assetManager,
             final TrasparentTitleView scoreView,
-            final Handler handler)
-    {
+            final Handler handler) throws IOException {
         this.mContext = context;
         this.mTransparentTitleView = scoreView;
         this.mInferenceHandler = handler;
@@ -135,11 +164,64 @@ public class testOnGetImageListener implements OnImageAvailableListener {
         bluePaint.setStyle(Paint.Style.STROKE);
 
         emotionInference = new EmotionInference(context);
+        imagefileCounter = 0;
+        mediaStorageDir = new File(Environment.getExternalStorageDirectory(), "RoboFeel");
+        //RoboFeel directory
+        if (!mediaStorageDir.exists()) {
+            if (!mediaStorageDir.mkdirs()) {
+                Log.d("App", "failed to create directory - Robofeel");
+            }
+        }
+        mediaStorageDir2 = new File(mediaStorageDir, "Images");
+        //images directory
+        if (!mediaStorageDir2.exists()) {
+            if (!mediaStorageDir2.mkdirs()) {
+                Log.d("App", "failed to create directory - images");
+            }
+        }
+
+
+        try {
+            logOrNot = getToLogOrNotVariable();
+        } catch (JSONException e) {
+            //default
+            logOrNot = "false";
+            e.printStackTrace();
+        }
+
+        try {
+            SaveOrNot = getToSaveImagesOrNotVariable();
+        } catch (JSONException e) {
+            //default
+            SaveOrNot = "false";
+            e.printStackTrace();
+        }
+
+        Date currentTime = Calendar.getInstance().getTime();
+        Log.d("Listener","Creating log file for current suession");
+        if(logOrNot.equals("true"));
+        {
+            mediaStorageDir3 = new File(mediaStorageDir2, "Images_"+currentTime);
+            //images per session directory
+            if (!mediaStorageDir3.exists()) {
+                if (!mediaStorageDir3.mkdirs()) {
+                    Log.d("App", "failed to create directory - images per session");
+                }
+            }
+
+            LogFileName = mediaStorageDir + "/RoboFeelLogs_" + currentTime + ".json";
+            tempLogFileName = mediaStorageDir + "/TEMPRoboFeelLogs_" + currentTime + ".json";
+            // Define the File Path and its Name
+            fileLogfile = new File(LogFileName);
+            FileWriter fileWriter = new FileWriter(fileLogfile);
+            bufferedWriter = new BufferedWriter(fileWriter);
+        }
 
     }
 
-    public void deInitialize() {
-        synchronized (testOnGetImageListener.this) {
+    public void deInitialize() throws Exception {
+        synchronized (finalOnGetImageListener.this) {
+            cleanLogFile();
             if (mFaceDet != null) {
                 mFaceDet.release();
             }
@@ -149,6 +231,49 @@ public class testOnGetImageListener implements OnImageAvailableListener {
             }
         }
     }
+
+    public static String convertStreamToString(InputStream is) throws Exception {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+        StringBuilder sb = new StringBuilder();
+        String line = null;
+        while ((line = reader.readLine()) != null) {
+            sb.append(line).append("\n");
+        }
+        reader.close();
+        return sb.toString();
+    }
+
+    public void cleanLogFile() throws Exception {
+        bufferedWriter.close();
+        File file = new File(tempLogFileName);
+        Log.d(TAG,"Delete last incomplete entry");
+        FileInputStream reader = new FileInputStream(LogFileName);
+
+        BufferedWriter writer = new BufferedWriter(new FileWriter(tempLogFileName));
+        String jsonfiletext = convertStreamToString(reader);
+        String finalText_for_comma = jsonfiletext;
+        try {
+            String finalText_for_bracket = jsonfiletext.substring(0, jsonfiletext.lastIndexOf('{'));
+            finalText_for_comma = finalText_for_bracket.substring(0, finalText_for_bracket.length() - 1);
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }
+
+        writer.write(finalText_for_comma);
+        fileLogfile.delete();
+
+        if(file.renameTo(fileLogfile)) {
+            Log.d(TAG,"renamed");
+        } else {
+            Log.d(TAG,"Error");
+        }
+
+        writer.close();
+        reader.close();
+    }
+
+
 
     private void drawResizedBitmap(final Bitmap src, final Bitmap dst) {
 
@@ -206,11 +331,20 @@ public class testOnGetImageListener implements OnImageAvailableListener {
 
     @Override
     public void onImageAvailable(final ImageReader reader) {
-        Log.e("testOnGetImageListener","Image Avaialble");
+        Log.e("finalOnGetImageListener","Image Avaialble");
         Image image = null;
         try {
             image = reader.acquireLatestImage();
 
+            /*
+            TO LOG:
+            1. imageFilename
+            2. Number of faces detected
+            3. Bounding boxes of faces
+            4. Landmarks
+            5. HOG
+
+             */
             if (image == null) {
                 Log.d(TAG,"returning null");
                 return;
@@ -280,22 +414,20 @@ public class testOnGetImageListener implements OnImageAvailableListener {
 
         mInversedBipmap = imageSideInversion(mCroppedBitmap);
         mResizedBitmap = Bitmap.createScaledBitmap(mInversedBipmap, (int) (INPUT_SIZE / 4.5), (int) (INPUT_SIZE / 4.5), true);
-        Log.e("onGetImageListener","here3");
 
         mInferenceHandler.post(
                 new Runnable() {
                     @Override
                     public void run() {
-                        Log.e("onGetImageListener","here4");
 
                         if (!new File(Constants.getFaceShapeModelPath()).exists()) {
-                            mTransparentTitleView.setText("Copying landmark model to " + Constants.getFaceShapeModelPath());
+                            //mTransparentTitleView.setText("Copying landmark model to " + Constants.getFaceShapeModelPath());
                             FileUtils.copyFileFromRawToOthers(mContext, R.raw.shape_predictor_68_face_landmarks, Constants.getFaceShapeModelPath());
                         }
 
                         if (mframeNum % 10 == 0) {
                             long startTime = System.currentTimeMillis();
-                            synchronized (testOnGetImageListener.this) {
+                            synchronized (finalOnGetImageListener.this) {
                                 Log.e(TAG,"detect being called");
                                 results = mFaceDet.detect(mResizedBitmap);
                                 if (results != null) {
@@ -308,13 +440,16 @@ public class testOnGetImageListener implements OnImageAvailableListener {
                             Log.e("onGetImageListener",results.toString());
 
                             // Draw on bitmap
+                            boxesList = new ArrayList();
+                            landmarksList = new ArrayList<>();
                             if (results.size() != 0) {
                                 for (final VisionDetRet ret : results) {
                                     float resizeRatio = 4.5f;
 
                                     // Draw landmark
                                     landmarks = ret.getFaceLandmarks();
-
+                                    landmarksList.add(landmarks);
+                                    boxesList.add(ret.toString());
                                     String s = ret.getLabel();
                                     Log.d(TAG, "label = " + s);
 
@@ -324,9 +459,60 @@ public class testOnGetImageListener implements OnImageAvailableListener {
 
                             }
                         }
+                             /*
+                                        TO LOG:
+                                        1. imageFilename
+                                        2. Number of faces detected
+                                        3. Bounding boxes of faces
+                                        4. Landmarks
+                                        5. HOG
 
+                                         */
                         // Draw on bitmap
                         if (results.size() != 0) {
+                            /*
+                            READ CONFIG.JSON AND SEE IF VALUES HAVE TO BE LOGGED OR NOT
+                            */
+
+                            if(logOrNot.equalsIgnoreCase("true")) {
+                                //logging code
+                                Date imageTime = Calendar.getInstance().getTime();
+                                Date time = Calendar.getInstance().getTime();
+
+                                filename = mediaStorageDir3 + "/images_" + imageTime.toString() + "_" + imagefileCounter + ".jpg";
+                                if(SaveOrNot.equalsIgnoreCase("true")){
+                                    //to save images or not
+                                    try (FileOutputStream out = new FileOutputStream(filename)) {
+                                        //save bitmap
+                                        mResizedBitmap.compress(Bitmap.CompressFormat.PNG, 100, out); // bmp is your Bitmap instance
+                                        // PNG is a lossless format, the compression factor (100) is ignored
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                                else {
+                                    filename="Image-not-saved";
+                                }
+
+                                imagefileCounter++;
+                                JSONObject objectToLog = new JSONObject();
+                                try {
+                                    objectToLog.put("ImageFilename", filename);
+                                    objectToLog.put("Number of Faces", results.size());
+                                    objectToLog.put("Bounding boxes", boxesList);
+                                    objectToLog.put("Landmarks", landmarksList);
+
+                                    String userString = objectToLog.toString();
+
+                                    bufferedWriter.write(userString);
+                                    bufferedWriter.write(",");
+
+                                } catch (JSONException | IOException e) {
+                                    e.printStackTrace();
+                                }
+
+                            }
+                            // Draw on bitmap
                             for (final VisionDetRet ret : results) {
                                 float resizeRatio = 4.5f;
 
@@ -334,6 +520,7 @@ public class testOnGetImageListener implements OnImageAvailableListener {
                                 landmarks = ret.getFaceLandmarks();
 
                                 String s = ret.getLabel();
+
                                 Log.d(TAG, "label = " + s);
 
                                 //findEmotion(landmarks, resizeRatio);
@@ -341,6 +528,7 @@ public class testOnGetImageListener implements OnImageAvailableListener {
                                 drawOnBitmap(landmarks, resizeRatio);
 
                             }
+
 
                         }
 
@@ -406,6 +594,39 @@ public class testOnGetImageListener implements OnImageAvailableListener {
             canvas.drawLine(x_mean, y_mean, xlist[i], ylist[i], myPaint);
         }
     }
+
+    private String getToLogOrNotVariable() throws IOException, JSONException {
+        String dataPath = "/sdcard/Download" + "/config.json";
+        String logOrNot;
+        InputStream is = new FileInputStream(dataPath);
+        int size = is.available();
+        byte[] buffer = new byte[size];
+        is.read(buffer);
+        is.close();
+        String myJson = new String(buffer, "UTF-8");
+        JSONObject obj = new JSONObject(myJson);
+        logOrNot = obj.getString("robofeel_log_items_or_not");
+        Log.d("myJson-LogOrNot",logOrNot);
+        return logOrNot;
+    }
+
+
+    private String getToSaveImagesOrNotVariable() throws IOException, JSONException {
+        String dataPath = "/sdcard/Download" + "/config.json";
+        String SaveOrNot;
+        InputStream is = new FileInputStream(dataPath);
+        int size = is.available();
+        byte[] buffer = new byte[size];
+        is.read(buffer);
+        is.close();
+        String myJson = new String(buffer, "UTF-8");
+        JSONObject obj = new JSONObject(myJson);
+        SaveOrNot = obj.getString("robofeel_save_images_or_not");
+        Log.d("myJson-LogOrNot",SaveOrNot);
+        return SaveOrNot;
+    }
+
+
 
     private void findEmotion(ArrayList<Point> landmarks, float resizeRatio) {
 

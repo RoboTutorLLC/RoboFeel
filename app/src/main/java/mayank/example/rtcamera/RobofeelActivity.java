@@ -71,11 +71,11 @@ import static java.lang.Math.PI;
 import static java.lang.Math.atan2;
 
 @EActivity(R.layout.activity_main)
-public class MainActivity extends AppCompatActivity {
+public class RobofeelActivity extends AppCompatActivity {
     private static final int RESULT_LOAD_IMG = 1;
     private static final int REQUEST_CODE_PERMISSION = 2;
 
-    private static final String TAG = "MainActivity";
+    private static final String TAG = "RobofeelActivity";
     private static final Map<Integer, String> emotionMap = createMap();
     // Storage Permissions
     private static String[] PERMISSIONS_REQ = {
@@ -146,6 +146,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d(TAG,"Creating Robofeel Activity");
         mListView = (MaterialListView) findViewById(R.id.material_listview);
 //        setSupportActionBar(mToolbar);
         // Just use hugo to print log
@@ -186,12 +187,13 @@ public class MainActivity extends AppCompatActivity {
     @AfterViews
     protected void setupUI() {
         mToolbar.setTitle(getString(R.string.app_name));
-        Toast.makeText(MainActivity.this, getString(R.string.description_info), Toast.LENGTH_LONG).show();
+        setContentView(R.layout.activity_main);
+        Toast.makeText(RobofeelActivity.this, getString(R.string.description_info), Toast.LENGTH_LONG).show();
     }
 
     @Click({R.id.fab})
     protected void launchGallery() {
-        Toast.makeText(MainActivity.this, "Pick one image", Toast.LENGTH_SHORT).show();
+        Toast.makeText(RobofeelActivity.this, "Pick one image", Toast.LENGTH_SHORT).show();
         Intent galleryIntent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         startActivityForResult(galleryIntent, RESULT_LOAD_IMG);
     }
@@ -229,7 +231,7 @@ public class MainActivity extends AppCompatActivity {
             runDetectAsync(mTestImgPath);
         } else {
             Timber.tag(TAG).d("demoStaticImage() mTestImgPath is null, go to gallery");
-            Toast.makeText(MainActivity.this, "Pick an image to run algorithms", Toast.LENGTH_SHORT).show();
+            Toast.makeText(RobofeelActivity.this, "Pick an image to run algorithms", Toast.LENGTH_SHORT).show();
             // Create intent to Open Image applications like Gallery, Google Photos
             Intent galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
             startActivityForResult(galleryIntent, RESULT_LOAD_IMG);
@@ -239,7 +241,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         if (requestCode == REQUEST_CODE_PERMISSION) {
-            Toast.makeText(MainActivity.this, "Demo using static images", Toast.LENGTH_SHORT).show();
+            Toast.makeText(RobofeelActivity.this, "Demo using static images", Toast.LENGTH_SHORT).show();
             demoStaticImage();
         }
     }
@@ -281,7 +283,7 @@ public class MainActivity extends AppCompatActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Toast.makeText(MainActivity.this, "Copy landmark model to " + targetPath, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(RobofeelActivity.this, "Copy landmark model to " + targetPath, Toast.LENGTH_SHORT).show();
                 }
             });
             FileUtils.copyFileFromRawToOthers(getApplicationContext(), R.raw.shape_predictor_68_face_landmarks, targetPath);
@@ -298,7 +300,7 @@ public class MainActivity extends AppCompatActivity {
         List<Card> cardrets = new ArrayList<>();
         List<VisionDetRet> faceList = mFaceDet.detect(imgPath);
         if (faceList.size() > 0) {
-            Card card = new Card.Builder(MainActivity.this)
+            Card card = new Card.Builder(RobofeelActivity.this)
                     .withProvider(BigImageCardProvider.class)
                     .setDrawable(drawRect(imgPath, faceList, Color.GREEN))
                     .setTitle("Face det")
@@ -316,7 +318,7 @@ public class MainActivity extends AppCompatActivity {
 
         /*List<VisionDetRet> personList = mPersonDet.detect(imgPath);
         if (personList.size() > 0) {
-            Card card = new Card.Builder(MainActivity.this)
+            Card card = new Card.Builder(RobofeelActivity.this)
                     .withProvider(BigImageCardProvider.class)
                     .setDrawable(drawRect(imgPath, personList, Color.BLUE))
                     .setTitle("Person det")
@@ -345,7 +347,7 @@ public class MainActivity extends AppCompatActivity {
 
     @UiThread
     protected void showDiaglog() {
-        mDialog = ProgressDialog.show(MainActivity.this, "Wait", "Face detection", true);
+        mDialog = ProgressDialog.show(RobofeelActivity.this, "Wait", "Face detection", true);
     }
 
     @UiThread

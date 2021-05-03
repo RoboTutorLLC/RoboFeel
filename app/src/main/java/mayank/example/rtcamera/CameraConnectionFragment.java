@@ -27,12 +27,10 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.graphics.Bitmap;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
-import android.hardware.Camera;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
@@ -42,7 +40,6 @@ import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
-import android.media.Image;
 import android.media.ImageReader;
 import android.os.Build;
 import android.os.Bundle;
@@ -58,9 +55,9 @@ import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.Toast;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -170,7 +167,11 @@ public class CameraConnectionFragment extends Fragment {
                     cameraDevice = null;
 
                     if (mOnGetPreviewListener != null) {
-                        mOnGetPreviewListener.deInitialize();
+                        try {
+                            mOnGetPreviewListener.deInitialize();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
 
@@ -185,7 +186,11 @@ public class CameraConnectionFragment extends Fragment {
                     }
 
                     if (mOnGetPreviewListener != null) {
-                        mOnGetPreviewListener.deInitialize();
+                        try {
+                            mOnGetPreviewListener.deInitialize();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
             };
@@ -472,6 +477,8 @@ public class CameraConnectionFragment extends Fragment {
             }
         } catch (final InterruptedException e) {
             throw new RuntimeException("Interrupted while trying to lock camera closing.", e);
+        } catch (Exception e) {
+            e.printStackTrace();
         } finally {
             cameraOpenCloseLock.release();
         }
@@ -515,7 +522,7 @@ public class CameraConnectionFragment extends Fragment {
     }
 
     //private final OnGetImageListener mOnGetPreviewListener = new OnGetImageListener();
-    private final testOnGetImageListener mOnGetPreviewListener = new testOnGetImageListener();
+    private final finalOnGetImageListener mOnGetPreviewListener = new finalOnGetImageListener();
 
     private final CameraCaptureSession.CaptureCallback captureCallback =
             new CameraCaptureSession.CaptureCallback() {
@@ -605,9 +612,13 @@ public class CameraConnectionFragment extends Fragment {
             Timber.tag(TAG).e("Exception!", e);
         }
 
-        mOnGetPreviewListener.initialize(getActivity().getApplicationContext(), getActivity().getAssets(), mScoreView, inferenceHandler);
+        try {
+            mOnGetPreviewListener.initialize(getActivity().getApplicationContext(), getActivity().getAssets(), mScoreView, inferenceHandler);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-       // mOnGetPreviewListener.initialize(getActivity().getApplicationContext(), getActivity().getAssets(), mScoreView, (ImageView) getActivity().findViewById(R.id.imageView1), inferenceHandler);
+        // mOnGetPreviewListener.initialize(getActivity().getApplicationContext(), getActivity().getAssets(), mScoreView, (ImageView) getActivity().findViewById(R.id.imageView1), inferenceHandler);
     }
 
     /**

@@ -5,9 +5,14 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
+
     <!-- CAMERA -->
-    <uses-permission android:name="android.permission.RECORD_AUDIO"></uses-permission>
     <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
+
     <uses-feature android:name="android.hardware.camera"/>
     <uses-feature android:name="android.hardware.camera.autofocus"/>
 
@@ -31,7 +36,9 @@
 
         </activity>
         <service android:name=".RecorderService"/>
-        <service android:name=".CameraService"/>
+        <service android:name=".RoboService"
+            android:stopWithTask="false"/>
+
         <service android:name=".VideoProcessingService"/>
 
         <activity
@@ -40,6 +47,8 @@
             android:screenOrientation="portrait"
             android:label="@string/app_name">
         </activity>
+        <activity android:name=".RobofeelActivity"></activity>
+        <activity android:name=".RobofeelActivity_"></activity>
     </application>
 
 </manifest>

@@ -20,6 +20,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 
+import java.io.IOException;
 import java.util.Arrays;
 
 import timber.log.Timber;
@@ -29,7 +30,7 @@ public class VideoProcessingService extends Service {
     protected static final int CAMERACHOICE = CameraCharacteristics.LENS_FACING_BACK;
     protected CameraDevice cameraDevice;
     protected CameraCaptureSession session;
-    private testOnGetImageListener mListener;
+    private finalOnGetImageListener mListener;
     protected ImageReader imageReader;
     private HandlerThread backgroundThread;
     public Handler backgroundHandler;
@@ -129,13 +130,16 @@ public class VideoProcessingService extends Service {
             }
             startBackgroundThread();
             manager.openCamera(pickedCamera, cameraStateCallback, null);
-            mListener = new testOnGetImageListener();
+            mListener = new finalOnGetImageListener();
+            Log.d("VideoProcessingService","Initialized from VideoProcessingService");
             mListener.initialize(getApplicationContext(), getAssets(), null, inferenceHandler);
             imageReader = ImageReader.newInstance( 1, 1, ImageFormat.YUV_420_888, 2);
             imageReader.setOnImageAvailableListener(mListener,null);
             Log.i(TAG, "imageReader created");
         } catch (CameraAccessException e){
             Log.e(TAG, e.getMessage());
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
