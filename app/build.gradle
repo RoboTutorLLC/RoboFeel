@@ -1,4 +1,5 @@
 apply plugin: 'com.android.application'
+apply plugin: 'com.chaquo.python'
 
 android {
     compileSdkVersion 27
@@ -10,6 +11,29 @@ android {
         versionCode 2
         versionName "${rootProject.ext.releaseVersionName}"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+        ndk {
+            abiFilters "armeabi-v7a", "x86"
+        }
+
+        python {
+            buildPython "C:/Users/asus/AppData/Local/Programs/Python/Python38/python"
+
+            pip{
+                install "numpy"
+                install "pillow"
+                install "opencv-contrib-python-headless"
+                install "scikit-image"
+                install "matplotlib"
+            }
+
+        }
+
+        sourceSets {
+            main {
+                python.srcDir "src/main/python"
+            }
+        }
     }
     buildTypes {
         release {

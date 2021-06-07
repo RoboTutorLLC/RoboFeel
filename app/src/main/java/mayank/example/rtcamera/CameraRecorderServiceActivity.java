@@ -1,5 +1,4 @@
 package mayank.example.rtcamera;
-
 import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
@@ -14,6 +13,10 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+
+import com.chaquo.python.PyObject;
+import com.chaquo.python.Python;
+import com.chaquo.python.android.AndroidPlatform;
 
 public class CameraRecorderServiceActivity extends Activity implements SurfaceHolder.Callback {
     private static final String TAG = "Recorder";
@@ -40,6 +43,15 @@ public class CameraRecorderServiceActivity extends Activity implements SurfaceHo
         mSurfaceHolder = mSurfaceView.getHolder();
         mSurfaceHolder.addCallback(this);
         mSurfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+
+
+        if (! Python.isStarted()) {
+            Python.start(new AndroidPlatform(this));
+
+        }
+
+
+
         Thread.setDefaultUncaughtExceptionHandler(new CrashHandler());
         int currentapiVersion = android.os.Build.VERSION.SDK_INT;
 

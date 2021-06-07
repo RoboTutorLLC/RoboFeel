@@ -2,16 +2,14 @@ package mayank.example.rtcamera;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-
+import android.app.Activity;
 import android.app.Notification;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
+import android.content.res.Configuration;
 import android.graphics.ImageFormat;
 import android.graphics.PixelFormat;
 import android.graphics.SurfaceTexture;
@@ -28,26 +26,19 @@ import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
 import android.media.MediaRecorder;
-import android.os.Build;
-import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
-import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.util.Size;
 import android.util.SparseArray;
-import android.view.Display;
-import android.view.Gravity;
-import android.view.LayoutInflater;
+import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -66,16 +57,16 @@ import java.util.List;
 import hugo.weaving.DebugLog;
 import timber.log.Timber;
 
-public class RoboService extends Service {
+public class CameraService extends Service {
     protected static final int CAMERA_CALIBRATION_DELAY = 500;
-    protected static final String TAG = "RoboService";
+    protected static final String TAG = "myLog";
     protected static final int CAMERACHOICE = CameraCharacteristics.LENS_FACING_BACK;
     protected static long cameraCaptureStartTime;
     protected CameraDevice cameraDevice;
     protected CameraCaptureSession session;
     protected ImageReader imageReader;
     private HandlerThread backgroundThread;
-    private finalOnGetImageListener mListener;
+    private testOnGetImageListener mListener;
     private SurfaceHolder mSurfaceHolder;
     private static Camera mServiceCamera;
     private SurfaceView mSurfaceView;
@@ -86,20 +77,7 @@ public class RoboService extends Service {
     private SurfaceTexture mSurfaceTexture;
     private boolean mRecordingStatus;
     private MediaRecorder mMediaRecorder;
-    private SessionVariables sessionVariables;
 
-
-    private static final int LayoutParamFlags = WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH
-            | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
-            | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-            | WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
-            | WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED;
-
-    private LayoutInflater inflater;
-    private Display mDisplay;
-    private View layoutView;
-    private WindowManager windowManager;
-    private WindowManager.LayoutParams params;
 
     /**
      * A {@link Handler} for running tasks in the background.
@@ -160,11 +138,11 @@ public class RoboService extends Service {
 
         @Override
         public void onReady(CameraCaptureSession session) {
-            RoboService.this.session = session;
+            CameraService.this.session = session;
             try {
                 session.setRepeatingRequest(createCaptureRequest(), captureCallback, backgroundHandler);
                 cameraCaptureStartTime = System.currentTimeMillis();
-            } catch (CameraAccessException | IllegalStateException e) {
+            } catch (CameraAccessException e) {
                 Log.e(TAG, e.getMessage());
             }
         }
@@ -194,47 +172,31 @@ public class RoboService extends Service {
         }
     };
 
-    public void readyCamera() throws CameraAccessException, IOException {
-        File mediaStorageDir = new File(Environment.getExternalStorageDirectory(), "RoboFeel");
+    public void readyCamera() throws CameraAccessException {
+            CameraManager manager = (CameraManager) getSystemService(CAMERA_SERVICE);
 
-        if (!mediaStorageDir.exists()) {
-            if (!mediaStorageDir.mkdirs()) {
-                Log.d("App", "failed to create directory");
+            String pickedCamera = getCamera(manager);
+            Log.d("Manager",manager.toString());
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                return;
             }
-        }
+            setUpCameraOutputs(0,0);
 
+            Log.d("PickedCamera  ",pickedCamera);
+            manager.openCamera("1", cameraStateCallback, null);
 
-        CameraManager manager = (CameraManager) getSystemService(CAMERA_SERVICE);
+            startBackgroundThread();
 
-        String pickedCamera = getCamera(manager);
-        Log.d("Manager",manager.toString());
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            return;
-        }
-        setUpCameraOutputs(0,0);
+           // imageReader = ImageReader.newInstance(1920, 1088, ImageFormat.JPEG, 2 /* images buffered */);
 
-        Log.d("PickedCamera  ",pickedCamera);
-        String CameraId = "1";
-        manager.openCamera(CameraId, cameraStateCallback, null);
-
-        startBackgroundThread();
-
-        // imageReader = ImageReader.newInstance(1920, 1088, ImageFormat.JPEG, 2 /* images buffered */);
-
-        mListener = new finalOnGetImageListener();
-        Log.d("RoboService","Initialized from RoboService");
-        Log.d(TAG, "REACHED HERE");
-        mListener.initialize(getApplicationContext(), getAssets(), null, inferenceHandler);
-        Log.d(TAG, "REACHED HERE 2");
-        imageReader = ImageReader.newInstance( 1, 1, ImageFormat.YUV_420_888, 2);
-        Log.d(TAG, "REACHED HERE 3");
-        //imageReader.setOnImageAvailableListener(onImageAvailableListener,backgroundHandler);
-        imageReader.setOnImageAvailableListener(mListener,backgroundHandler);
-        Log.d(TAG, "imageReader created");
+            mListener = new testOnGetImageListener();
+            mListener.initialize(getApplicationContext(), getAssets(), null, inferenceHandler);
+            imageReader = ImageReader.newInstance( 1, 1, ImageFormat.YUV_420_888, 2);
+            //imageReader.setOnImageAvailableListener(onImageAvailableListener,backgroundHandler);
+            imageReader.setOnImageAvailableListener(mListener,backgroundHandler);
+            Log.d(TAG, "imageReader created");
 
     }
-
-
 
     @SuppressLint("LongLogTag")
     @DebugLog
@@ -408,7 +370,7 @@ public class RoboService extends Service {
             mMediaRecorder.setOutputFile(mediaStorageDir+"/video"+ currentTime +".mp4");
             mMediaRecorder.setVideoFrameRate(30);
             mMediaRecorder.setVideoSize(mPreviewSize.width, mPreviewSize.height);
-            // mMediaRecorder.setPreviewDisplay(mSurfaceHolder.getSurface());
+           // mMediaRecorder.setPreviewDisplay(mSurfaceHolder.getSurface());
 
             mMediaRecorder.prepare();
             mMediaRecorder.start();
@@ -449,10 +411,8 @@ public class RoboService extends Service {
         try {
             for (String cameraId : manager.getCameraIdList()) {
                 CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
-                Log.e("getCameraFor", manager.getCameraCharacteristics(cameraId).toString());
                 int cOrientation = characteristics.get(CameraCharacteristics.LENS_FACING);
                 if (cOrientation == CAMERACHOICE) {
-                    Log.e("getCameraReturn", cameraId);
                     return cameraId;
                 }
             }
@@ -465,74 +425,24 @@ public class RoboService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, "onStartCommand flags " + flags + " startId " + startId);
-        Log.d(TAG,"intent.getFAction - " + intent.getAction());
-        if(intent.getAction()!=null) {
-            if (intent.getAction().equals("STOP"))
-                Log.d(TAG,"Exiting");
-                stopSelf();
-        }
 
-
-        try{
-            Bundle bundle = intent.getExtras();
-            sessionVariables.setUniqueUserID(bundle.getString("studentId"));
-            sessionVariables.setNewSessId(bundle.getString("sessionId"));
-        } catch (Exception e) {
+        try {
+            readyCamera();
+        } catch (CameraAccessException e) {
             e.printStackTrace();
         }
+        notification = new Notification(R.drawable.sample_android,
+                "RoboFeel service running", System.currentTimeMillis());
 
+        PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
+                new Intent(this, CameraRecorderServiceActivity.class), PendingIntent.FLAG_UPDATE_CURRENT);
 
-
+        notification.contentIntent = contentIntent;
+        
+        startForeground(1, notification);
+        //if (!mRecordingStatus)
+        //    startRecording();
         return super.onStartCommand(intent, flags, startId);
-    }
-
-    private Notification getMyActivityNotification(String text){
-        // The PendingIntent to launch our activity if the user selects this notification
-        CharSequence title = "RoboFeel";
-        Intent mIntent = new Intent(this, RoboService.class);
-        mIntent.setAction("STOP");
-        PendingIntent contentIntent = PendingIntent.getActivity(this,
-                0, new Intent(this, CameraRecorderServiceActivity.class),0);
-        PendingIntent stopIntent = PendingIntent.getService(this,0,mIntent,0);
-
-        return new Notification.Builder(this)
-                .setContentTitle(title)
-                .setContentText(text)
-                .setSmallIcon(R.drawable.sample_android)
-                .addAction(R.drawable.ic_stop,"Stop Service", stopIntent)
-                .setContentIntent(contentIntent).getNotification();
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    private void startMyOwnForeground(){
-        String NOTIFICATION_CHANNEL_ID = "mayank.example.rtcamera";
-        String channelName = "My Background Service";
-        NotificationChannel chan = new NotificationChannel(NOTIFICATION_CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_DEFAULT);
-        chan.setLightColor(Color.BLUE);
-        chan.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
-        NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        assert manager != null;
-        manager.createNotificationChannel(chan);
-        CharSequence title = "RoboFeel";
-        Intent mIntent = new Intent(this, RoboService.class);
-        mIntent.setAction("STOP");
-        PendingIntent contentIntent = PendingIntent.getActivity(this,
-                0, new Intent(this, CameraRecorderServiceActivity.class),0);
-        PendingIntent stopIntent = PendingIntent.getService(this,0,mIntent,0);
-
-        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID);
-
-
-        Notification notification =  notificationBuilder.setOngoing(true)
-                .setContentTitle(title)
-                .setContentText("Service is running.")
-                .setSmallIcon(R.drawable.sample_android)
-                .addAction(R.drawable.ic_stop,"Stop Service", stopIntent)
-                .setPriority(NotificationManager.IMPORTANCE_DEFAULT)
-                .setCategory(Notification.CATEGORY_SERVICE)
-                .setContentIntent(contentIntent).build();
-
-        startForeground(2, notification);
     }
 
     @Override
@@ -540,44 +450,14 @@ public class RoboService extends Service {
         Log.d(TAG, "onCreate service");
         mRecordingStatus = false;
         //mServiceCamera = CameraRecorder.mCamera;
-        // mServiceCamera = Camera.open(1);
+       // mServiceCamera = Camera.open(1);
         mSurfaceView = CameraRecorderServiceActivity.mSurfaceView;
         mImageView = CameraRecorderServiceActivity.mImageView;
         mSurfaceHolder = CameraRecorderServiceActivity.mSurfaceHolder;
-
-        params = new WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.WRAP_CONTENT,
-                Build.VERSION.SDK_INT < Build.VERSION_CODES.O ?
-                        WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY :
-                        WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-                WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
-                PixelFormat.TRANSLUCENT);
-        params.gravity = Gravity.CENTER | Gravity.END;
-        windowManager = (WindowManager) this.getSystemService(WINDOW_SERVICE);
-        mDisplay = windowManager.getDefaultDisplay();
-        inflater = LayoutInflater.from(this);
-        //layoutView = inflater.inflate(R.layout.overlay_layout, null);
-        //windowManager.addView(layoutView, params);
-        try {
-            readyCamera();
-            // start the notification
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                Log.d(TAG,"SDK - " + String.valueOf(Build.VERSION.SDK_INT));
-                startMyOwnForeground();
-            }
-            else
-                startForeground(1, getMyActivityNotification("Service is running."));
-
-        } catch (CameraAccessException | IOException e) {
-            e.printStackTrace();
-        }
-
         super.onCreate();
     }
 
-    public void actOnReadyCameraDevice()
-    {
-
+    public void actOnReadyCameraDevice() {
         try {
             cameraDevice.createCaptureSession(Arrays.asList(imageReader.getSurface()), sessionStateCallback, null);
         } catch (CameraAccessException e) {
@@ -587,45 +467,9 @@ public class RoboService extends Service {
 
     @Override
     public void onDestroy() {
-        Log.d(TAG,"onDestroy()");
         try {
-            //  stopForeground(1,notification);
-            if (mListener != null) {
-                try {
-                    mListener.deInitialize();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-            windowManager.removeView(layoutView);
-            //stopRecording();
-            mRecordingStatus = false;
-
-            if(session!=null){
-                session.abortCaptures();
-                session.close();
-            }
-        } catch (CameraAccessException e) {
-            Log.e(TAG, e.getMessage());
-        }
-
-        super.onDestroy();
-    }
-
-    @Override
-    public void onTaskRemoved(Intent rootIntent) {
-        Log.d(TAG,"onTaskRemoved()");
-        try {
-            //  stopForeground(1,notification);
-            if (mListener != null) {
-                try {
-                    mListener.deInitialize();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-            windowManager.removeView(layoutView);
-            //stopRecording();
+          //  stopForeground(1,notification);
+            stopRecording();
             mRecordingStatus = false;
 
             session.abortCaptures();
@@ -633,7 +477,6 @@ public class RoboService extends Service {
             Log.e(TAG, e.getMessage());
         }
         session.close();
-        super.onTaskRemoved(rootIntent);
     }
 
 
