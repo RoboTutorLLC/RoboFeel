@@ -1,0 +1,32 @@
+language: android
+dist: trusty
+sudo: false
+jdk:
+  - oraclejdk8
+android:
+  components:
+    - tools
+    - android-26
+    - build-tools-26.0.2
+    - platform-tools
+before_cache:
+  - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+cache:
+  directories:
+    - "${TRAVIS_BUILD_DIR}/gradle/caches/"
+    - "${TRAVIS_BUILD_DIR}/gradle/wrapper/dists/"
+    - "$HOME/.gradle/caches/"
+    - "$HOME/.gradle/wrapper/"
+script:
+  - cp -v sample_config_files/sample_keystore.properties keystore.properties
+  - keytool -genkeypair -dname "cn=TravisCI, ou=TravisCI, o=Sun, c=US" -alias business
+    -keypass kpi135 -keystore android.keystore -storepass ab987c -validity 20000
+after_success:
+  - bash scripts/update_apk.sh
+branches:
+  only:
+    - master
+    - development
+env:
+  global:
+    secure: "xNLNcSgvmDvDvc9P5KXELT+vfNde+M2wmfLIGn3mZfpOLkKj6ybFUrEBmSPhptKFBSlJPwNQI75iHaEGjBoGb0YHXxTL7Z0LAW7sOXFwh7SokenTPdsMeb9fqkeeVkYD83WYVmSNwRbW2zIimumffFi2Iyw1t8NbVGoT5M0IVLmLiyS01V3j8gMtQloaabGU4VF0fix9Pzhb7e+8sYKp8LKPJyBNGyI1rXH1Bc8n22RMtuE8ZUQXAoESVfuRHY/tPmlHEOuK5dUTY2KcvUYrOVJdjvFfqbn2WTX8JP8Sm8a6BMp2JpOgVLQhHcwZwFru1u78trMhJhog7F2TZV8bnno2qZYtYTUGV/UWLC5ejOQn6DRQzAck1m6mgXIl4CAp0F7qjRzZvzzuPm9RtGqKRRNpDyPGxWeFYsHFKZYMvnAEE1sFkNRyK7s9N1V74R9dmoSdvVqHz94BuwxIcWbI4AXJJvIuW50l5b18Ze1h3JItc956pfyUvEGXvQnnI2DB7qeJv+AvffyXANwlQ7BbpDDuS6a0lpct5+kW28u/FL2UVfixBTUMbzP/2IkPrPckF7N4epEvZSD/4gBrgWrc+nnC94Mq88BlFMkMQ/eUsCqTWlkq3vh3AZLkxUP5VS24YcgA1raK3xh99rwPebDdD4V9NV+nlIWmzYYrwM7bEn8="
