@@ -54,7 +54,7 @@ if [[ $FINAL_VERSION =~ $regex ]]; then
   assets="${BASH_REMATCH[4]}"
 fi
 
-mv temp.apk RoboFeel-${TRAVIS_PULL_REQUEST_BRANCH}-${DATE_TODAY}-v${major}.${minor}.${build}.${assets}.apk
+mv temp.apk RoboFeel-${TRAVIS_PULL_REQUEST_BRANCH}-${DATE_TODAY}.apk
 
 ls
 echo `ls -al`
