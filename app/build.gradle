@@ -17,7 +17,7 @@ android {
         }
 
         python {
-            buildPython "/Users/vsushant/opt/anaconda3/bin/python3"
+            //buildPython "/Users/vsushant/opt/anaconda3/bin/python3"
 
             pip{
                 install "numpy"
