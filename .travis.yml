@@ -1,6 +1,6 @@
 language: android
 python:
-  - "3.7"
+  - "3.4"
 dist: trusty
 sudo: required
 jdk:
@@ -15,9 +15,9 @@ android:
 before_script:
   - touch local.properties
   - type -t deactivate && deactivate || true
-  - export PATH=/opt/python/3.7.1/bin:$PATH
+  - export PATH=/opt/python/3.4.1/bin:$PATH
     # Update pip
-  - python3.7 -m pip install --upgrade pip
+  - python3.4 -m pip install --upgrade pip
 before_cache:
 - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
 cache:
