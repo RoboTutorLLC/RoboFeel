@@ -2,12 +2,12 @@ apply plugin: 'com.android.application'
 apply plugin: 'com.chaquo.python'
 
 android {
-    compileSdkVersion 27
+    compileSdkVersion 26
 
     defaultConfig {
         applicationId "mayank.example.rtcamera"
         minSdkVersion 21
-        targetSdkVersion 27
+        targetSdkVersion 26
         versionCode 2
         versionName "${rootProject.ext.releaseVersionName}"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
@@ -17,7 +17,7 @@ android {
         }
 
         python {
-            buildPython "C:/Users/asus/AppData/Local/Programs/Python/Python38/python"
+            //buildPython "/Users/vsushant/opt/anaconda3/bin/python3"
 
             pip{
                 install "numpy"
