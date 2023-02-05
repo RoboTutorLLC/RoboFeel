@@ -1,32 +1,39 @@
 language: android
-dist: trusty
-sudo: false
+python:
+  - 3.7
+dist: xenial
+sudo: required
 jdk:
-  - oraclejdk8
+- oraclejdk8
 android:
   components:
-    - tools
-    - android-26
-    - build-tools-26.0.2
-    - platform-tools
+  - tools
+  - android-27
+  - android-26
+  - build-tools-28.0.3
+  - platform-tools
+before_script:
+  - touch local.properties
+  - type -t deactivate && deactivate || true
+  - export PATH=/opt/python/3.7.1/bin:$PATH
 before_cache:
-  - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+- rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
 cache:
   directories:
-    - "${TRAVIS_BUILD_DIR}/gradle/caches/"
-    - "${TRAVIS_BUILD_DIR}/gradle/wrapper/dists/"
-    - "$HOME/.gradle/caches/"
-    - "$HOME/.gradle/wrapper/"
+  - "${TRAVIS_BUILD_DIR}/gradle/caches/"
+  - "${TRAVIS_BUILD_DIR}/gradle/wrapper/dists/"
+  - "$HOME/.gradle/caches/"
+  - "$HOME/.gradle/wrapper/"
 script:
-  - cp -v sample_config_files/sample_keystore.properties keystore.properties
-  - keytool -genkeypair -dname "cn=TravisCI, ou=TravisCI, o=Sun, c=US" -alias business
-    -keypass kpi135 -keystore android.keystore -storepass ab987c -validity 20000
+- cp -v sample_config_files/sample_keystore.properties keystore.properties
+- keytool -genkeypair -dname "cn=TravisCI, ou=TravisCI, o=Sun, c=US" -alias business
+  -keypass kpi135 -keystore android.keystore -storepass ab987c -validity 20000
 after_success:
-  - bash scripts/update_apk.sh
+- bash scripts/update_apk.sh
 branches:
   only:
-    - master
-    - development
+  - master
+  - development
 env:
   global:
-    secure: "JEDFXM27/+CboSEVjkKRUrmo2bHjnI4JD4XllqYonTUUUpc2sNCPQYxaT2DMnogSF+0VmABVI1nHISijtYOsFNhM1eMU78MtqLqCWHcTuAjb3unIqP6+eu257YqjvGVBRc4Tkk9ZxV98vwXZJ3dgPTTABZudO7o6AHpWGQk+1ZsgkNgoOeo+y0orYJvL1r8jq7mSEDFdYfF2JYxxhTk6dqoJ8Ylx8m+BPxpOyYoa5k01w0Dscw9FOF7ol4HJDhX43m67FqU/YPFsk4yZSG0Rc1ou6KKF70UDCGecLh0PIdi/hwPo0gp4H2JDz5xebzhrPvC/W8uGGqXNHu6vyHW+uAPh/tvHPc99hG4OEQF6wYQ1sFX89/MfmbsM3x3RLr8UFE5ghihFKwsRAq5b7uurTVQ2FZ+K11nEz+OsIl7FjXEwmCYRmj02FP5Id2OqZvh0Z16I65ITelrk7t2GxAX97BJN7PoEqQ9dGeF4eoXCT3kCyeWC12bcUlUd8JMvkDO0IBdtG3bpnhnJ11Da3uhGoqOvm9phr8cwmZkXRPmoRcFecAIfgYldvdtsJfrgmhPvFHIZJ/NlBJ/+KMzDQLQNyKJoyF5WoNCeiVs0u9wtu0mQY1qDeVdwrdhkIRX4RTbLqAda0w8dBVQww0suX9iaEE6Yvo13SyNHdzI4mRHU2r8="
+    secure: oN3Qv2o4/6+ynHSEMSrRd2FHbVHCt2V6r9guE+bdvfwzk7EtkXAeSoi2aYscrkwhw+dMj7y+ZFYofdZHIVJarX4ehswVmhhL7fjx/LcBqglHeNtaBzQqtAviPHeOt9C0016QncFJMTaa7J+Hch7tXhqT2wz8iv2NRzb9VBa2W/PANdwpf6DmrBnlpIiwJR2OQDFKsWOiY7/AeWjDTSoIfHnd92OkidV1TkdzwqZeQCfXCLk6SoLOwPn2uQR6QmXginPo29cX9lzpUiPY+hyk8bLoz9O+D+exfMthyt2K92BfiiXMsrboPjjS8PioOH6yDFJ8t0aZQYz87XPUn5TFGlEvODijhGC2zX/zX5qtvLxASxfeTin10N7P44NxhSFQ0fUY7oyeSBfb6uQU8CjKV9QNZn//THqqVmCn2ZPfLModfgiznseXu1X6ysXoAhY5FmLQRakyANrwoEyRnau/8d6U3Hk+EEYVprPwzGkf7iPonYNRqr1BdwfQXVAjjTQoagwBE+hkg9aF/0OWxNkoy+kY2K1/Md2260KfwlfpvfSQROs5niOa1CWAwMuh6LeoPIIiKFVswBHrqPi/Dm40oXCNsZvX7hJF/UDrrD2E6uCvL1RsYYzxdtZa4az+/2W+E5Yo+KhcqVgiFC7s7nldPnpJuct0jqLV5KoMw0QcGWA=
