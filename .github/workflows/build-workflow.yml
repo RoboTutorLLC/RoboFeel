@@ -16,8 +16,11 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v3
 
+      - name: Before build
+        run: touch local.properties
+
       - name: Build project
-        run: ./gradlew assembleDebug --stacktrace
+        run: ./gradlew assembleDebug
 
       - name: Fetch current datetime
         id: fetch_current_datetime
