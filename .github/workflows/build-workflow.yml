@@ -16,8 +16,11 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v3
 
-      - name: Before build
+      - name: Before build task 1
         run: touch local.properties
+
+      - name: Before build task 2
+        run: export PATH=/opt/python/3.7.1/bin:$PATH
 
       - name: Build project
         run: ./gradlew assembleDebug
