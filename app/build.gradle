@@ -40,6 +40,23 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+
+        debug {
+            debuggable true
+        }
+    }
+
+    // defining APK naming behaviour
+    applicationVariants.all { variant ->
+        variant.outputs.each { output ->
+            def project = "robofeel"
+            def SEP = "."
+            def buildType = variant.buildType.name
+            def version = variant.versionName
+
+            def newApkName = project + SEP + buildType + SEP + version + ".apk"
+            output.outputFileName = new File("./../../../../../build/", newApkName)
+        }
     }
 
 }
@@ -89,5 +106,11 @@ dependencies {
     implementation files('libs/libandroid_tensorflow_inference_java.jar')
     testImplementation 'org.testng:testng:6.9.6'
 
+}
+
+task getVersionName() {
+    project.gradle.projectsEvaluated {
+        println "$project.android.defaultConfig.versionName"
+    }
 }
 apply plugin: 'com.jakewharton.hugo'
